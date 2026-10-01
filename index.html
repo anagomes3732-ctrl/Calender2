@@ -1,0 +1,1438 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>Meu Calendário de Estudos</title>
+  <style>
+    :root {
+      --primary: #DFA0B8;
+      --primary-dark: #C8829C;
+      --primary-light: #F6E8ED;
+      --bg-app: #FCF7F9;
+      --surface: #FFFFFF;
+      --text-main: #30303A;
+      --text-muted: #77737A;
+      --border-color: #F0E2E7;
+      --shadow-sm: 0 4px 12px rgba(223, 160, 184, 0.08);
+      --shadow-md: 0 8px 24px rgba(223, 160, 184, 0.12);
+      --radius-sm: 10px;
+      --radius-md: 16px;
+      --radius-lg: 24px;
+      --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+    }
+
+    body {
+      background-color: #111115;
+      font-family: var(--font-family);
+      color: var(--text-main);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      overflow: hidden;
+    }
+
+    .app-container {
+      width: 100%;
+      max-width: 430px;
+      height: 100vh;
+      max-height: 932px;
+      background-color: var(--bg-app);
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      box-shadow: 0 0 40px rgba(0,0,0,0.5);
+    }
+
+    @media (min-height: 700px) and (min-width: 440px) {
+      .app-container {
+        height: 92vh;
+        border-radius: 40px;
+        border: 8px solid #222;
+      }
+    }
+
+    /* Views Framework */
+    .view-content {
+      flex: 1;
+      overflow-y: auto;
+      overflow-x: hidden;
+      padding: 20px 20px 90px 20px;
+      display: none;
+      opacity: 0;
+      transform: translateY(8px);
+      transition: opacity 0.25s ease, transform 0.25s ease;
+      width: 100%;
+      box-sizing: border-box;
+    }
+
+    .view-content.active {
+      display: block;
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* SVG Icons */
+    .icon {
+      width: 22px;
+      height: 22px;
+      stroke-width: 1.8;
+      stroke: currentColor;
+      fill: none;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      display: inline-block;
+      vertical-align: middle;
+    }
+
+    /* Typography & UI Components */
+    h1 { 
+      font-size: 24px; 
+      font-weight: 700; 
+      color: var(--text-main); 
+      letter-spacing: -0.5px; 
+      word-break: break-word;
+    }
+    h2 { font-size: 18px; font-weight: 600; color: var(--text-main); margin-bottom: 12px; }
+    p { font-size: 14px; color: var(--text-muted); line-height: 1.5; }
+
+    .card {
+      background: var(--surface);
+      border-radius: var(--radius-md);
+      padding: 18px;
+      margin-bottom: 16px;
+      border: 1px solid var(--border-color);
+      box-shadow: var(--shadow-sm);
+      width: 100%;
+      box-sizing: border-box;
+    }
+
+    .btn {
+      width: 100%;
+      padding: 14px 20px;
+      border-radius: var(--radius-md);
+      border: none;
+      background-color: var(--primary);
+      color: white;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: all 0.2s ease;
+      box-shadow: 0 4px 14px rgba(223, 160, 184, 0.35);
+    }
+
+    .btn:active {
+      transform: scale(0.98);
+      background-color: var(--primary-dark);
+    }
+
+    .btn-secondary {
+      background-color: var(--primary-light);
+      color: var(--primary-dark);
+      box-shadow: none;
+    }
+
+    .btn-outline {
+      background-color: transparent;
+      border: 1px solid var(--border-color);
+      color: var(--text-muted);
+      box-shadow: none;
+    }
+
+    .btn-danger {
+      background-color: #fce8e6;
+      color: #ea4335;
+      box-shadow: none;
+    }
+
+    .form-group {
+      margin-bottom: 16px;
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .form-input {
+      width: 100%;
+      padding: 12px 16px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border-color);
+      background-color: var(--bg-app);
+      font-size: 15px;
+      color: var(--text-main);
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .form-input:focus {
+      border-color: var(--primary);
+    }
+
+    .color-picker {
+      display: flex;
+      gap: 10px;
+      margin-top: 8px;
+      flex-wrap: wrap;
+    }
+
+    .color-option {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      cursor: pointer;
+      border: 2px solid transparent;
+      transition: transform 0.2s;
+    }
+
+    .color-option.selected {
+      border-color: var(--text-main);
+      transform: scale(1.15);
+    }
+
+    /* Splash Screen */
+    #splash-screen {
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background-color: var(--bg-app);
+      z-index: 100;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 60px 30px;
+      text-align: center;
+      transition: opacity 0.4s ease, visibility 0.4s;
+    }
+
+    .splash-hero {
+      margin: auto 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .splash-illustration {
+      width: 140px;
+      height: 140px;
+      background: var(--surface);
+      border-radius: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 30px;
+      box-shadow: var(--shadow-md);
+      color: var(--primary);
+      border: 1px solid var(--border-color);
+    }
+
+    /* Header */
+    .header {
+      padding: 20px 20px 10px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    /* Progress Bar */
+    .progress-bar-bg {
+      width: 100%;
+      height: 10px;
+      background-color: var(--primary-light);
+      border-radius: 20px;
+      overflow: hidden;
+      margin: 10px 0;
+    }
+
+    .progress-bar-fill {
+      height: 100%;
+      background-color: var(--primary);
+      border-radius: 20px;
+      width: 0%;
+      transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    /* Calendar Visuals */
+    .calendar-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+
+    .calendar-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 4px;
+      text-align: center;
+    }
+
+    .weekday {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-muted);
+      padding: 6px 0;
+    }
+
+    .day-cell {
+      aspect-ratio: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      border-radius: var(--radius-sm);
+      font-size: 14px;
+      font-weight: 500;
+      position: relative;
+      cursor: pointer;
+      background: var(--surface);
+      border: 1px solid transparent;
+      transition: all 0.15s ease;
+    }
+
+    .day-cell.other-month {
+      opacity: 0.25;
+    }
+
+    .day-cell.today {
+      border-color: var(--primary);
+      font-weight: 700;
+      color: var(--primary-dark);
+    }
+
+    .day-cell.studied {
+      background-color: var(--primary-light);
+      color: var(--primary-dark);
+      font-weight: 600;
+    }
+
+    .day-cell.planned {
+      border: 1px dashed var(--primary);
+    }
+
+    .day-indicators {
+      display: flex;
+      gap: 2px;
+      position: absolute;
+      bottom: 4px;
+    }
+
+    .dot-studied {
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background-color: var(--primary);
+    }
+
+    .dot-planned {
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      border: 1px solid var(--primary);
+    }
+
+    .legend {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      margin-top: 16px;
+      font-size: 12px;
+      color: var(--text-muted);
+      flex-wrap: wrap;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    /* Subject Cards */
+    .subject-card {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: var(--surface);
+      padding: 16px;
+      border-radius: var(--radius-md);
+      margin-bottom: 12px;
+      border: 1px solid var(--border-color);
+      box-shadow: var(--shadow-sm);
+      cursor: pointer;
+    }
+
+    .subject-info {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-width: 0;
+    }
+
+    .subject-color-tag {
+      width: 12px;
+      height: 36px;
+      border-radius: 6px;
+      flex-shrink: 0;
+    }
+
+    /* Modals */
+    .modal-overlay {
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(48, 48, 58, 0.4);
+      backdrop-filter: blur(4px);
+      z-index: 90;
+      display: flex;
+      align-items: flex-end;
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.25s ease;
+    }
+
+    .modal-overlay.active {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .modal-container {
+      width: 100%;
+      background: var(--surface);
+      border-radius: 28px 28px 0 0;
+      padding: 24px;
+      max-height: 85vh;
+      overflow-y: auto;
+      transform: translateY(100%);
+      transition: transform 0.3s cubic-bezier(0.1, 0.9, 0.2, 1);
+    }
+
+    .modal-overlay.active .modal-container {
+      transform: translateY(0);
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+
+    .checkbox-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin: 16px 0;
+    }
+
+    .checkbox-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px;
+      background: var(--bg-app);
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      border: 1px solid transparent;
+    }
+
+    .checkbox-item.selected {
+      border-color: var(--primary);
+      background-color: var(--primary-light);
+    }
+
+    .checkbox-custom {
+      width: 20px;
+      height: 20px;
+      border-radius: 6px;
+      border: 2px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: white;
+      flex-shrink: 0;
+    }
+
+    .checkbox-item.selected .checkbox-custom {
+      background: var(--primary);
+      border-color: var(--primary);
+      color: white;
+    }
+
+    /* Bottom Navigation */
+    .bottom-nav {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 70px;
+      background: var(--surface);
+      border-top: 1px solid var(--border-color);
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      padding-bottom: 8px;
+      z-index: 80;
+    }
+
+    .nav-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      color: var(--text-muted);
+      font-size: 10px;
+      font-weight: 500;
+      cursor: pointer;
+      width: 20%;
+      transition: color 0.2s;
+    }
+
+    .nav-item.active {
+      color: var(--primary);
+      font-weight: 600;
+    }
+
+    /* Empty state */
+    .empty-state {
+      text-align: center;
+      padding: 40px 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .empty-state-icon {
+      width: 60px;
+      height: 60px;
+      background-color: var(--primary-light);
+      color: var(--primary);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 16px;
+    }
+
+    /* FIX RESPONSIVIDADE - PROGRESS / SEU RITMO */
+    .progress-stats-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 8px;
+      text-align: center;
+      margin-top: 16px;
+      width: 100%;
+    }
+
+    .progress-stat-card {
+      background: var(--bg-app);
+      padding: 10px 4px;
+      border-radius: var(--radius-sm);
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      overflow: hidden;
+    }
+
+    .progress-stat-card span {
+      font-size: 9px;
+      color: var(--text-muted);
+      font-weight: 600;
+      letter-spacing: -0.2px;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+      overflow: hidden;
+      width: 100%;
+      display: block;
+    }
+
+    .progress-stat-card .stat-val {
+      font-size: 16px;
+      font-weight: 700;
+      margin-top: 4px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="app-container">
+    
+    <!-- SPLASH SCREEN -->
+    <div id="splash-screen">
+      <div class="splash-hero">
+        <div class="splash-illustration">
+          <svg class="icon" style="width: 60px; height: 60px;" viewBox="0 0 24 24">
+            <rect x="3" y="4" width="18" height="18" rx="3" ry="3"></rect>
+            <line x1="16" y1="2" x2="16" y2="6"></line>
+            <line x1="8" y1="2" x2="8" y2="6"></line>
+            <line x1="3" y1="10" x2="21" y2="10"></line>
+            <path d="M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01"></path>
+          </svg>
+        </div>
+        <h1>Meu Calendário</h1>
+        <p style="margin-top: 8px;">Organize seus estudos do seu jeito.</p>
+      </div>
+      <button class="btn" id="btn-enter-app">
+        ENTRAR
+        <svg class="icon" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"></polyline></svg>
+      </button>
+    </div>
+
+    <!-- MAIN APP CONTENT AREA -->
+
+    <!-- 1. HOME VIEW -->
+    <div id="view-home" class="view-content">
+      <div class="header" style="padding: 10px 0 20px 0;">
+        <div>
+          <h1 id="home-greeting">Olá!</h1>
+          <p>Vamos organizar seus estudos?</p>
+        </div>
+      </div>
+
+      <div class="card" style="background: linear-gradient(135deg, var(--surface) 0%, var(--primary-light) 100%);">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+          <div>
+            <span style="font-size: 12px; font-weight: 600; color: var(--primary-dark); text-transform: uppercase;">Hoje</span>
+            <h2 id="home-today-date" style="margin: 4px 0 0 0;">30 de Setembro</h2>
+          </div>
+          <div style="background: white; padding: 8px; border-radius: 50%; color: var(--primary);">
+            <svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+          </div>
+        </div>
+        <div style="margin-top: 20px;">
+          <p style="margin-bottom: 10px; font-weight: 500; color: var(--text-main);">Você estudou hoje?</p>
+          <button class="btn" id="btn-quick-log">Registrar estudo</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Seu progresso</h2>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+          <span style="font-size: 13px; color: var(--text-muted);" id="home-progress-text">0 dias estudados</span>
+          <span style="font-size: 13px; font-weight: 600; color: var(--primary-dark);" id="home-progress-percent">0%</span>
+        </div>
+        <div class="progress-bar-bg">
+          <div class="progress-bar-fill" id="home-progress-fill"></div>
+        </div>
+      </div>
+
+      <h2>Ações rápidas</h2>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+        <div class="card" id="card-nav-calendar" style="margin-bottom:0; cursor:pointer; text-align:center;">
+          <div style="color: var(--primary); margin-bottom: 8px;">
+            <svg class="icon" style="width:28px; height:28px;" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+          </div>
+          <span style="font-size: 14px; font-weight: 600;">Calendário</span>
+        </div>
+        <div class="card" id="card-nav-subjects" style="margin-bottom:0; cursor:pointer; text-align:center;">
+          <div style="color: var(--primary); margin-bottom: 8px;">
+            <svg class="icon" style="width:28px; height:28px;" viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
+          </div>
+          <span style="font-size: 14px; font-weight: 600;">Matérias</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 2. CALENDAR VIEW -->
+    <div id="view-calendar" class="view-content">
+      <h1 style="margin-bottom: 16px;">Meu Calendário</h1>
+      <div class="card">
+        <div class="calendar-header">
+          <button class="btn-outline" id="btn-prev-month" style="width: auto; padding: 8px;"><svg class="icon" viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"></polyline></svg></button>
+          <h2 id="calendar-month-year" style="margin: 0; font-size: 16px;">SETEMBRO 2026</h2>
+          <button class="btn-outline" id="btn-next-month" style="width: auto; padding: 8px;"><svg class="icon" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"></polyline></svg></button>
+        </div>
+        <div class="calendar-grid">
+          <div class="weekday">SEG</div><div class="weekday">TER</div><div class="weekday">QUA</div>
+          <div class="weekday">QUI</div><div class="weekday">SEX</div><div class="weekday">SÁB</div><div class="weekday">DOM</div>
+        </div>
+        <div class="calendar-grid" id="calendar-days">
+          <!-- Rendered via JS -->
+        </div>
+        <div class="legend">
+          <div class="legend-item"><span style="width: 8px; height: 8px; border-radius: 50%; background: var(--primary);"></span> Estudado</div>
+          <div class="legend-item"><span style="width: 8px; height: 8px; border-radius: 50%; border: 1px solid var(--primary);"></span> Planejado</div>
+          <div class="legend-item"><span style="width: 8px; height: 8px; border-radius: 50%; background: var(--primary-dark);"></span> Hoje</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 3. SUBJECTS VIEW -->
+    <div id="view-subjects" class="view-content">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+        <h1>Minhas Matérias</h1>
+        <button class="btn" id="btn-open-add-subject" style="width: auto; padding: 10px 16px; font-size: 13px;">+ Nova matéria</button>
+      </div>
+      <div id="subjects-container">
+        <!-- Rendered via JS -->
+      </div>
+    </div>
+
+    <!-- 4. PROGRESS VIEW -->
+    <div id="view-progress" class="view-content">
+      <h1 style="margin-bottom: 16px;">Seu Ritmo</h1>
+      <div class="card" style="text-align: center; padding: 24px;">
+        <span style="font-size: 13px; color: var(--text-muted); font-weight: 500;">TOTAL DE DIAS ESTUDADOS</span>
+        <h1 style="font-size: 42px; color: var(--primary-dark); margin: 8px 0;" id="progress-total-days">0</h1>
+        <p>Dias dedicados ao seu aprendizado</p>
+      </div>
+
+      <div class="card">
+        <h2>Este Mês</h2>
+        <div class="progress-stats-grid">
+          <div class="progress-stat-card">
+            <span>REGISTRADOS</span>
+            <div class="stat-val" style="color: var(--text-main);" id="prog-month-total">0</div>
+          </div>
+          <div class="progress-stat-card">
+            <span>PLANEJADOS</span>
+            <div class="stat-val" style="color: var(--primary);" id="prog-month-planned">0</div>
+          </div>
+          <div class="progress-stat-card">
+            <span>CONCLUÍDOS</span>
+            <div class="stat-val" style="color: var(--primary-dark);" id="prog-month-done">0</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 5. SETTINGS VIEW -->
+    <div id="view-settings" class="view-content">
+      <h1 style="margin-bottom: 16px;">Ajustes</h1>
+      <div class="card">
+        <h2>Sobre o Aplicativo</h2>
+        <p>Meu Calendário de Estudos v1.0</p>
+        <p style="margin-top: 8px; font-size: 12px;">Seus dados são salvos localmente e com total privacidade no seu aparelho.</p>
+      </div>
+      <div class="card">
+        <h2>Gerenciar Dados</h2>
+        <button class="btn btn-danger" id="btn-reset-data">Apagar todos os dados</button>
+      </div>
+    </div>
+
+    <!-- BOTTOM NAVIGATION -->
+    <div class="bottom-nav">
+      <div class="nav-item active" data-target="view-home">
+        <svg class="icon" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+        <span>Início</span>
+      </div>
+      <div class="nav-item" data-target="view-calendar">
+        <svg class="icon" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+        <span>Calendário</span>
+      </div>
+      <div class="nav-item" data-target="view-subjects">
+        <svg class="icon" viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
+        <span>Matérias</span>
+      </div>
+      <div class="nav-item" data-target="view-progress">
+        <svg class="icon" viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
+        <span>Progresso</span>
+      </div>
+      <div class="nav-item" data-target="view-settings">
+        <svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+        <span>Ajustes</span>
+      </div>
+    </div>
+
+    <!-- MODALS -->
+
+    <!-- Modal: Onboarding First Subject -->
+    <div class="modal-overlay" id="modal-onboarding">
+      <div class="modal-container">
+        <h2>Vamos começar?</h2>
+        <p style="margin-bottom: 16px;">Qual matéria você quer estudar primeiro?</p>
+        <div class="form-group">
+          <label>Nome da matéria</label>
+          <input type="text" class="form-input" id="onboarding-subject-name" placeholder="Ex: Matemática, Direito Constitucional...">
+        </div>
+        <button class="btn" id="btn-save-onboarding">Adicionar matéria</button>
+      </div>
+    </div>
+
+    <!-- Modal: Add/Edit Subject -->
+    <div class="modal-overlay" id="modal-subject">
+      <div class="modal-container">
+        <div class="modal-header">
+          <h2 id="modal-subject-title">Nova matéria</h2>
+          <button class="btn-outline" onclick="closeModals()" style="width: auto; padding: 6px;"><svg class="icon" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
+        </div>
+        <input type="hidden" id="subject-id-input">
+        <div class="form-group">
+          <label>Nome da matéria</label>
+          <input type="text" class="form-input" id="subject-name-input" placeholder="Digite o nome da matéria">
+        </div>
+        <div class="form-group">
+          <label>Cor de identificação</label>
+          <div class="color-picker" id="color-picker">
+            <div class="color-option selected" data-color="#DFA0B8" style="background: #DFA0B8;"></div>
+            <div class="color-option" data-color="#F4C2C2" style="background: #F4C2C2;"></div>
+            <div class="color-option" data-color="#F8D7DA" style="background: #F8D7DA;"></div>
+            <div class="color-option" data-color="#E2D4F0" style="background: #E2D4F0;"></div>
+            <div class="color-option" data-color="#D0E8F2" style="background: #D0E8F2;"></div>
+            <div class="color-option" data-color="#D4F0F0" style="background: #D4F0F0;"></div>
+            <div class="color-option" data-color="#FCF6BD" style="background: #FCF6BD;"></div>
+          </div>
+        </div>
+        <button class="btn" id="btn-save-subject" style="margin-top: 24px;">Salvar matéria</button>
+      </div>
+    </div>
+
+    <!-- Modal: Day Log/Plan -->
+    <div class="modal-overlay" id="modal-day">
+      <div class="modal-container">
+        <div class="modal-header">
+          <div>
+            <h2 id="modal-day-date">30 de Setembro</h2>
+            <p id="modal-day-subtitle">Selecione as matérias</p>
+          </div>
+          <button class="btn-outline" onclick="closeModals()" style="width: auto; padding: 6px;"><svg class="icon" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
+        </div>
+
+        <div style="display: flex; gap: 10px; margin-bottom: 16px;">
+          <button class="btn btn-secondary" id="tab-log-type-studied" style="flex:1;">Estudado</button>
+          <button class="btn btn-outline" id="tab-log-type-planned" style="flex:1;">Planejado</button>
+        </div>
+
+        <div id="day-subjects-list" class="checkbox-list">
+          <!-- Rendered via JS -->
+        </div>
+
+        <button class="btn" id="btn-save-day-log">Salvar registros</button>
+      </div>
+    </div>
+
+    <!-- Modal: Subject Details -->
+    <div class="modal-overlay" id="modal-subject-details">
+      <div class="modal-container">
+        <div class="modal-header">
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <div id="subject-detail-color-indicator" style="width: 14px; height: 14px; border-radius: 50%;"></div>
+            <h2 id="subject-detail-name">Matéria</h2>
+          </div>
+          <button class="btn-outline" onclick="closeModals()" style="width: auto; padding: 6px;"><svg class="icon" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px;">
+          <div style="background: var(--bg-app); padding: 12px; border-radius: var(--radius-sm);">
+            <span style="font-size: 11px; color: var(--text-muted);">DIAS ESTUDADOS</span>
+            <div style="font-size: 20px; font-weight: 700; color: var(--primary-dark);" id="subject-detail-studied-count">0</div>
+          </div>
+          <div style="background: var(--bg-app); padding: 12px; border-radius: var(--radius-sm);">
+            <span style="font-size: 11px; color: var(--text-muted);">PRÓXIMO ESTUDO</span>
+            <div style="font-size: 14px; font-weight: 600; color: var(--text-main); margin-top: 4px;" id="subject-detail-next-plan">Nenhum</div>
+          </div>
+        </div>
+
+        <h3>Histórico Recente</h3>
+        <div id="subject-history-list" style="margin: 12px 0 20px 0; max-height: 160px; overflow-y: auto;">
+          <!-- JS Render -->
+        </div>
+
+        <div style="display: flex; gap: 10px;">
+          <button class="btn btn-outline" id="btn-edit-subject" style="flex:1;">Editar</button>
+          <button class="btn btn-danger" id="btn-delete-subject" style="flex:1;">Excluir</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    // --- APP STATE ---
+    const APP_STORAGE_KEY = 'study_app_data_v1';
+    
+    let state = {
+      subjects: [],
+      logs: {}, // Format: { 'YYYY-MM-DD': { studied: [subjIds], planned: [subjIds] } }
+      currentDate: new Date()
+    };
+
+    let selectedDateStr = null;
+    let selectedLogType = 'studied'; // 'studied' or 'planned'
+    let selectedSubjectId = null;
+    let selectedColor = '#DFA0B8';
+
+    // --- INITIALIZATION ---
+    document.addEventListener('DOMContentLoaded', () => {
+      loadData();
+      setupEventListeners();
+      renderHome();
+      renderCalendar();
+      renderSubjects();
+      
+      // Auto Splash Check
+      document.getElementById('splash-screen').style.display = 'flex';
+    });
+
+    // --- STORAGE ---
+    function saveData() {
+      localStorage.setItem(APP_STORAGE_KEY, JSON.stringify({
+        subjects: state.subjects,
+        logs: state.logs
+      }));
+    }
+
+    function loadData() {
+      const data = localStorage.getItem(APP_STORAGE_KEY);
+      if (data) {
+        try {
+          const parsed = JSON.parse(data);
+          state.subjects = parsed.subjects || [];
+          state.logs = parsed.logs || {};
+        } catch (e) {
+          console.error('Error loading data', e);
+        }
+      }
+    }
+
+    // --- NAVIGATION ---
+    function switchView(targetId) {
+      document.querySelectorAll('.view-content').forEach(view => {
+        view.classList.remove('active');
+      });
+      document.querySelectorAll('.nav-item').forEach(nav => {
+        nav.classList.remove('active');
+        if (nav.dataset.target === targetId) nav.classList.add('active');
+      });
+
+      const targetView = document.getElementById(targetId);
+      if (targetView) {
+        targetView.classList.add('active');
+      }
+
+      if (targetId === 'view-home') renderHome();
+      if (targetId === 'view-calendar') renderCalendar();
+      if (targetId === 'view-subjects') renderSubjects();
+      if (targetId === 'view-progress') renderProgress();
+    }
+
+    // --- EVENT LISTENERS ---
+    function setupEventListeners() {
+      // Splash screen ENTER
+      document.getElementById('btn-enter-app').addEventListener('click', () => {
+        document.getElementById('splash-screen').style.opacity = '0';
+        setTimeout(() => {
+          document.getElementById('splash-screen').style.display = 'none';
+          checkFirstUse();
+        }, 400);
+      });
+
+      // Bottom Nav
+      document.querySelectorAll('.nav-item').forEach(item => {
+        item.addEventListener('click', () => switchView(item.dataset.target));
+      });
+
+      // Home Nav Cards
+      document.getElementById('card-nav-calendar').addEventListener('click', () => switchView('view-calendar'));
+      document.getElementById('card-nav-subjects').addEventListener('click', () => switchView('view-subjects'));
+      document.getElementById('btn-quick-log').addEventListener('click', () => {
+        const todayStr = formatDateKey(new Date());
+        openDayModal(todayStr);
+      });
+
+      // Calendar Navigation
+      document.getElementById('btn-prev-month').addEventListener('click', () => {
+        state.currentDate.setMonth(state.currentDate.getMonth() - 1);
+        renderCalendar();
+      });
+      document.getElementById('btn-next-month').addEventListener('click', () => {
+        state.currentDate.setMonth(state.currentDate.getMonth() + 1);
+        renderCalendar();
+      });
+
+      // Subject Management Modals
+      document.getElementById('btn-open-add-subject').addEventListener('click', () => openSubjectModal());
+      document.getElementById('btn-save-subject').addEventListener('click', saveSubject);
+      document.getElementById('btn-save-onboarding').addEventListener('click', saveOnboardingSubject);
+
+      // Color Picker Selection
+      document.querySelectorAll('.color-option').forEach(opt => {
+        opt.addEventListener('click', (e) => {
+          document.querySelectorAll('.color-option').forEach(o => o.classList.remove('selected'));
+          e.target.classList.add('selected');
+          selectedColor = e.target.dataset.color;
+        });
+      });
+
+      // Day Log Modals
+      document.getElementById('tab-log-type-studied').addEventListener('click', () => switchLogType('studied'));
+      document.getElementById('tab-log-type-planned').addEventListener('click', () => switchLogType('planned'));
+      document.getElementById('btn-save-day-log').addEventListener('click', saveDayLog);
+
+      // Subject Details Modals Actions
+      document.getElementById('btn-edit-subject').addEventListener('click', () => {
+        closeModals();
+        openSubjectModal(selectedSubjectId);
+      });
+
+      document.getElementById('btn-delete-subject').addEventListener('click', () => {
+        if (confirm('Excluir esta matéria? Essa ação também removerá os registros de estudo relacionados a ela.')) {
+          deleteSubject(selectedSubjectId);
+          closeModals();
+        }
+      });
+
+      // Reset Data Settings
+      document.getElementById('btn-reset-data').addEventListener('click', () => {
+        if (confirm('Tem certeza que deseja apagar todos os seus registros?')) {
+          localStorage.removeItem(APP_STORAGE_KEY);
+          state.subjects = [];
+          state.logs = {};
+          location.reload();
+        }
+      });
+    }
+
+    function checkFirstUse() {
+      if (state.subjects.length === 0) {
+        document.getElementById('modal-onboarding').classList.add('active');
+      } else {
+        switchView('view-home');
+      }
+    }
+
+    function closeModals() {
+      document.querySelectorAll('.modal-overlay').forEach(m => m.classList.remove('active'));
+    }
+
+    // --- HOME RENDERING ---
+    function renderHome() {
+      const now = new Date();
+      const monthNames = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
+      
+      document.getElementById('home-today-date').innerText = `${now.getDate()} de ${monthNames[now.getMonth()]}`;
+
+      // Calculate total studied days
+      let studiedDaysCount = 0;
+      Object.keys(state.logs).forEach(dateKey => {
+        if (state.logs[dateKey].studied && state.logs[dateKey].studied.length > 0) {
+          studiedDaysCount++;
+        }
+      });
+
+      document.getElementById('home-progress-text').innerText = `${studiedDaysCount} dias estudados`;
+      
+      // Calculate progress bar percent based on current month days
+      const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+      const percent = Math.min(100, Math.round((studiedDaysCount / daysInMonth) * 100));
+      
+      document.getElementById('home-progress-percent').innerText = `${percent}%`;
+      document.getElementById('home-progress-fill').style.width = `${percent}%`;
+    }
+
+    // --- CALENDAR LOGIC & RENDERING ---
+    function renderCalendar() {
+      const year = state.currentDate.getFullYear();
+      const month = state.currentDate.getMonth();
+      
+      const monthNames = ["JANEIRO", "FEVEREIRO", "MARÇO", "ABRIL", "MAIO", "JUNHO", "JULHO", "AGOSTO", "SETEMBRO", "OUTUBRO", "NOVEMBRO", "DEZEMBRO"];
+      document.getElementById('calendar-month-year').innerText = `${monthNames[month]} ${year}`;
+
+      const grid = document.getElementById('calendar-days');
+      grid.innerHTML = '';
+
+      const firstDay = new Date(year, month, 1);
+      const lastDay = new Date(year, month + 1, 0);
+      
+      // Get starting day index (0 = Monday, ..., 6 = Sunday)
+      let startingDay = firstDay.getDay() - 1;
+      if (startingDay === -1) startingDay = 6;
+
+      const totalDays = lastDay.getDate();
+
+      // Previous month padding
+      const prevMonthLastDay = new Date(year, month, 0).getDate();
+      for (let i = startingDay - 1; i >= 0; i--) {
+        const cell = document.createElement('div');
+        cell.className = 'day-cell other-month';
+        cell.innerText = prevMonthLastDay - i;
+        grid.appendChild(cell);
+      }
+
+      // Current Month Days
+      const today = new Date();
+      const todayKey = formatDateKey(today);
+
+      for (let day = 1; day <= totalDays; day++) {
+        const cell = document.createElement('div');
+        cell.className = 'day-cell';
+        cell.innerText = day;
+
+        const dateObj = new Date(year, month, day);
+        const dateKey = formatDateKey(dateObj);
+
+        if (dateKey === todayKey) {
+          cell.classList.add('today');
+        }
+
+        const log = state.logs[dateKey];
+        const hasStudied = log && log.studied && log.studied.length > 0;
+        const hasPlanned = log && log.planned && log.planned.length > 0;
+
+        if (hasStudied) {
+          cell.classList.add('studied');
+        } else if (hasPlanned) {
+          cell.classList.add('planned');
+        }
+
+        // Add visual dots
+        if (hasStudied || hasPlanned) {
+          const dotsContainer = document.createElement('div');
+          dotsContainer.className = 'day-indicators';
+          
+          if (hasStudied) {
+            const dot = document.createElement('span');
+            dot.className = 'dot-studied';
+            dotsContainer.appendChild(dot);
+          }
+          if (hasPlanned) {
+            const dot = document.createElement('span');
+            dot.className = 'dot-planned';
+            dotsContainer.appendChild(dot);
+          }
+          cell.appendChild(dotsContainer);
+        }
+
+        cell.addEventListener('click', () => openDayModal(dateKey));
+        grid.appendChild(cell);
+      }
+    }
+
+    // --- DAY MODAL & LOGGING ---
+    function openDayModal(dateKey) {
+      if (state.subjects.length === 0) {
+        alert('Você ainda não possui matérias cadastradas. Por favor, adicione uma matéria primeiro.');
+        switchView('view-subjects');
+        return;
+      }
+
+      selectedDateStr = dateKey;
+      const [y, m, d] = dateKey.split('-');
+      const monthNames = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
+      
+      document.getElementById('modal-day-date').innerText = `${parseInt(d)} de ${monthNames[parseInt(m)-1]}`;
+      
+      switchLogType('studied');
+      document.getElementById('modal-day').classList.add('active');
+    }
+
+    function switchLogType(type) {
+      selectedLogType = type;
+      
+      const btnStudied = document.getElementById('tab-log-type-studied');
+      const btnPlanned = document.getElementById('tab-log-type-planned');
+
+      if (type === 'studied') {
+        btnStudied.className = 'btn btn-secondary';
+        btnPlanned.className = 'btn btn-outline';
+        document.getElementById('modal-day-subtitle').innerText = 'O que você estudou neste dia?';
+      } else {
+        btnPlanned.className = 'btn btn-secondary';
+        btnStudied.className = 'btn btn-outline';
+        document.getElementById('modal-day-subtitle').innerText = 'O que você pretende estudar?';
+      }
+
+      renderDaySubjectList();
+    }
+
+    function renderDaySubjectList() {
+      const container = document.getElementById('day-subjects-list');
+      container.innerHTML = '';
+
+      const dayLog = state.logs[selectedDateStr] || { studied: [], planned: [] };
+      const selectedIds = dayLog[selectedLogType] || [];
+
+      state.subjects.forEach(subject => {
+        const isChecked = selectedIds.includes(subject.id);
+        const item = document.createElement('div');
+        item.className = `checkbox-item ${isChecked ? 'selected' : ''}`;
+        item.innerHTML = `
+          <div class="checkbox-custom">
+            ${isChecked ? '<svg class="icon" style="width:14px;height:14px;" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>' : ''}
+          </div>
+          <div style="width: 10px; height: 10px; border-radius: 50%; background: ${subject.color}; flex-shrink: 0;"></div>
+          <span style="font-size: 15px; font-weight: 500; word-break: break-word;">${escapeHtml(subject.name)}</span>
+        `;
+
+        item.addEventListener('click', () => {
+          let updatedList = [...selectedIds];
+          if (updatedList.includes(subject.id)) {
+            updatedList = updatedList.filter(id => id !== subject.id);
+          } else {
+            updatedList.push(subject.id);
+          }
+
+          if (!state.logs[selectedDateStr]) {
+            state.logs[selectedDateStr] = { studied: [], planned: [] };
+          }
+          state.logs[selectedDateStr][selectedLogType] = updatedList;
+
+          renderDaySubjectList();
+        });
+
+        container.appendChild(item);
+      });
+    }
+
+    function saveDayLog() {
+      saveData();
+      closeModals();
+      renderCalendar();
+      renderHome();
+    }
+
+    // --- SUBJECT MANAGEMENT ---
+    function renderSubjects() {
+      const container = document.getElementById('subjects-container');
+      container.innerHTML = '';
+
+      if (state.subjects.length === 0) {
+        container.innerHTML = `
+          <div class="empty-state">
+            <div class="empty-state-icon">
+              <svg class="icon" viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
+            </div>
+            <h2>Você ainda não tem matérias</h2>
+            <p style="margin-bottom: 20px;">Adicione sua primeira matéria para começar a organizar seus estudos.</p>
+            <button class="btn" onclick="openSubjectModal()">+ Adicionar matéria</button>
+          </div>
+        `;
+        return;
+      }
+
+      state.subjects.forEach(subject => {
+        // Count total studies for this subject
+        let count = 0;
+        Object.values(state.logs).forEach(log => {
+          if (log.studied && log.studied.includes(subject.id)) count++;
+        });
+
+        const card = document.createElement('div');
+        card.className = 'subject-card';
+        card.innerHTML = `
+          <div class="subject-info">
+            <div class="subject-color-tag" style="background-color: ${subject.color};"></div>
+            <div style="min-width: 0;">
+              <h3 style="font-size: 16px; font-weight: 600; word-break: break-word;">${escapeHtml(subject.name)}</h3>
+              <p style="font-size: 13px; color: var(--text-muted);">${count} ${count === 1 ? 'estudo registrado' : 'estudos registrados'}</p>
+            </div>
+          </div>
+          <svg class="icon" style="color: var(--text-muted); flex-shrink: 0;" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"></polyline></svg>
+        `;
+
+        card.addEventListener('click', () => openSubjectDetailsModal(subject.id));
+        container.appendChild(card);
+      });
+    }
+
+    function openSubjectModal(subjectId = null) {
+      selectedSubjectId = subjectId;
+      const input = document.getElementById('subject-name-input');
+      const title = document.getElementById('modal-subject-title');
+
+      if (subjectId) {
+        const subject = state.subjects.find(s => s.id === subjectId);
+        title.innerText = 'Editar matéria';
+        input.value = subject.name;
+        selectedColor = subject.color;
+      } else {
+        title.innerText = 'Nova matéria';
+        input.value = '';
+        selectedColor = '#DFA0B8';
+      }
+
+      // Update color picker state
+      document.querySelectorAll('.color-option').forEach(opt => {
+        opt.classList.toggle('selected', opt.dataset.color === selectedColor);
+      });
+
+      document.getElementById('modal-subject').classList.add('active');
+    }
+
+    function saveSubject() {
+      const input = document.getElementById('subject-name-input');
+      const name = input.value.trim();
+
+      if (!name) return alert('Digite o nome da matéria.');
+
+      if (selectedSubjectId) {
+        const subject = state.subjects.find(s => s.id === selectedSubjectId);
+        if (subject) {
+          subject.name = name;
+          subject.color = selectedColor;
+        }
+      } else {
+        const newSubject = {
+          id: 'subj_' + Date.now(),
+          name: name,
+          color: selectedColor
+        };
+        state.subjects.push(newSubject);
+      }
+
+      saveData();
+      closeModals();
+      renderSubjects();
+    }
+
+    function saveOnboardingSubject() {
+      const input = document.getElementById('onboarding-subject-name');
+      const name = input.value.trim();
+
+      if (!name) return alert('Por favor, digite o nome de uma matéria.');
+
+      state.subjects.push({
+        id: 'subj_' + Date.now(),
+        name: name,
+        color: '#DFA0B8'
+      });
+
+      saveData();
+      closeModals();
+      switchView('view-home');
+    }
+
+    function deleteSubject(subjectId) {
+      state.subjects = state.subjects.filter(s => s.id !== subjectId);
+      
+      // Cleanup logs
+      Object.keys(state.logs).forEach(dateKey => {
+        if (state.logs[dateKey].studied) {
+          state.logs[dateKey].studied = state.logs[dateKey].studied.filter(id => id !== subjectId);
+        }
+        if (state.logs[dateKey].planned) {
+          state.logs[dateKey].planned = state.logs[dateKey].planned.filter(id => id !== subjectId);
+        }
+      });
+
+      saveData();
+      renderSubjects();
+    }
+
+    // --- SUBJECT DETAILS MODAL ---
+    function openSubjectDetailsModal(subjectId) {
+      selectedSubjectId = subjectId;
+      const subject = state.subjects.find(s => s.id === subjectId);
+      if (!subject) return;
+
+      document.getElementById('subject-detail-name').innerText = subject.name;
+      document.getElementById('subject-detail-color-indicator').style.backgroundColor = subject.color;
+
+      // Stats calculation
+      let studiedDays = [];
+      let plannedDays = [];
+
+      Object.keys(state.logs).sort().reverse().forEach(dateKey => {
+        const log = state.logs[dateKey];
+        if (log.studied && log.studied.includes(subjectId)) {
+          studiedDays.push(dateKey);
+        }
+        if (log.planned && log.planned.includes(subjectId)) {
+          plannedDays.push(dateKey);
+        }
+      });
+
+      document.getElementById('subject-detail-studied-count').innerText = studiedDays.length;
+
+      // Next planned
+      const todayStr = formatDateKey(new Date());
+      const futurePlanned = plannedDays.filter(d => d >= todayStr).sort();
+      
+      if (futurePlanned.length > 0) {
+        const [y, m, d] = futurePlanned[0].split('-');
+        document.getElementById('subject-detail-next-plan').innerText = `${d}/${m}/${y}`;
+      } else {
+        document.getElementById('subject-detail-next-plan').innerText = 'Nenhum';
+      }
+
+      // History
+      const historyList = document.getElementById('subject-history-list');
+      historyList.innerHTML = '';
+
+      if (studiedDays.length === 0) {
+        historyList.innerHTML = '<p style="font-size:13px; color:var(--text-muted);">Nenhum registro de estudo ainda.</p>';
+      } else {
+        studiedDays.forEach(dateKey => {
+          const [y, m, d] = dateKey.split('-');
+          const item = document.createElement('div');
+          item.style.cssText = 'display:flex; justify-content:space-between; padding: 8px 0; border-bottom: 1px solid var(--border-color); font-size: 13px;';
+          item.innerHTML = `
+            <span>${d}/${m}/${y}</span>
+            <span style="color: var(--primary-dark); font-weight: 600;">Estudado</span>
+          `;
+          historyList.appendChild(item);
+        });
+      }
+
+      document.getElementById('modal-subject-details').classList.add('active');
+    }
+
+    // --- PROGRESS VIEW ---
+    function renderProgress() {
+      let totalStudied = 0;
+      let monthStudied = 0;
+      let monthPlanned = 0;
+
+      const now = new Date();
+      const currentMonthPrefix = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+
+      Object.keys(state.logs).forEach(dateKey => {
+        const log = state.logs[dateKey];
+        if (log.studied && log.studied.length > 0) {
+          totalStudied++;
+          if (dateKey.startsWith(currentMonthPrefix)) {
+            monthStudied++;
+          }
+        }
+        if (log.planned && log.planned.length > 0 && dateKey.startsWith(currentMonthPrefix)) {
+          monthPlanned++;
+        }
+      });
+
+      document.getElementById('progress-total-days').innerText = totalStudied;
+      document.getElementById('prog-month-total').innerText = monthStudied;
+      document.getElementById('prog-month-planned').innerText = monthPlanned;
+      document.getElementById('prog-month-done').innerText = monthStudied;
+    }
+
+    // --- UTILS ---
+    function formatDateKey(dateObj) {
+      const y = dateObj.getFullYear();
+      const m = String(dateObj.getMonth() + 1).padStart(2, '0');
+      const d = String(dateObj.getDate()).padStart(2, '0');
+      return `${y}-${m}-${d}`;
+    }
+
+    function escapeHtml(str) {
+      return str.replace(/[&<>"']/g, function(m) {
+        return {
+          '&': '&amp;',
+          '<': '&lt;',
+          '>': '&gt;',
+          '"': '&quot;',
+          "'": '&#039;'
+        }[m];
+      });
+    }
+  </script>
+</body>
+</html>
